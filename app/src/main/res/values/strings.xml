@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">G2-Link</string>
+    <string name="app_tagline">Offline Mesh Communication</string>
+    <string name="notification_channel_mesh">G2-Link Background</string>
+    <string name="notification_channel_messages">Incoming Messages</string>
+    <string name="notification_mesh_active">G2-Link Active</string>
+    <string name="notification_searching">Searching for nearby devices…</string>
+    <string name="broadcast_emergency_title">🚨 Emergency Broadcast</string>
+    <string name="update_available">G2-Link update available</string>
+    <string name="no_internet_needed">Works without internet</string>
+</resources>

@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>G2-Link — Offline Mesh Communication</title>
+  <meta name="description"
+    content="G2-Link lets you message nearby people without internet, SIM card, or cell signal. Works in disasters, blackouts and remote areas." />
+  <meta property="og:title" content="G2-Link — Offline Mesh Communication" />
+  <meta property="og:description"
+    content="Communicate without internet, SIM or signal. Mesh networking for Android." />
+  <meta property="og:image" content="https://G2-links.github.io/g2link/og-image.png" />
+  <meta name="theme-color" content="#00C6FF" />
+
+  <!-- Cloudflare Analytics — paste your token below (free) -->
+  <!-- <script defer src='https://static.cloudflareinsights.com/beacon.min.js'
+    data-cf-beacon='{"token": "YOUR_TOKEN_HERE"}'></script> -->
+
+  <style>
+    :root {
+      --brand:    #00C6FF;
+      --brand-deep: #0072FF;
+      --bg:       #090E18;
+      --surface:  #101828;
+      --surface2: #1A2535;
+      --text:     #E8F0FE;
+      --muted:    #8BA0BF;
+      --dim:      #4A5568;
+      --green:    #00E676;
+      --red:      #FF1744;
+      --amber:    #FFD740;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── NAV ───────────────────────────────────── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(9,14,24,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(0,198,255,0.12);
+      padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 60px;
+    }
+    .nav-brand {
+      font-size: 20px; font-weight: 800;
+      background: linear-gradient(135deg, var(--brand), var(--brand-deep));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .nav-links { display: flex; gap: 24px; }
+    .nav-links a {
+      color: var(--muted); text-decoration: none; font-size: 14px;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--brand); }
+
+    /* ── HERO ──────────────────────────────────── */
+    .hero {
+      min-height: 90vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 48px 24px;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%,
+        rgba(0,198,255,0.08) 0%, transparent 70%);
+    }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(0,198,255,0.1);
+      border: 1px solid rgba(0,198,255,0.3);
+      border-radius: 999px; padding: 6px 14px;
+      font-size: 12px; color: var(--brand); font-weight: 600;
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      font-size: clamp(36px, 7vw, 72px);
+      font-weight: 900; line-height: 1.05;
+      margin-bottom: 20px;
+    }
+    .hero h1 span {
+      background: linear-gradient(135deg, var(--brand), var(--brand-deep));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero p {
+      font-size: 18px; color: var(--muted);
+      max-width: 520px; line-height: 1.6;
+      margin-bottom: 36px;
+    }
+
+    .hero-buttons {
+      display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+      margin-bottom: 48px;
+    }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: linear-gradient(135deg, var(--brand-deep), var(--brand));
+      color: #000; font-weight: 800; font-size: 16px;
+      padding: 14px 28px; border-radius: 14px;
+      text-decoration: none; border: none; cursor: pointer;
+      transition: transform .15s, box-shadow .15s;
+      box-shadow: 0 0 32px rgba(0,198,255,0.25);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 48px rgba(0,198,255,0.4);
+    }
+
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--surface2); color: var(--text);
+      font-weight: 600; font-size: 15px;
+      padding: 14px 24px; border-radius: 14px;
+      text-decoration: none; border: 1px solid rgba(255,255,255,0.1);
+      transition: border-color .15s;
+    }
+    .btn-secondary:hover { border-color: var(--brand); }
+
+    /* ── STATS ROW ─────────────────────────────── */
+    .stats {
+      display: flex; gap: 32px; flex-wrap: wrap; justify-content: center;
+    }
+    .stat { text-align: center; }
+    .stat-number {
+      font-size: 28px; font-weight: 800; color: var(--brand);
+      display: block;
+    }
+    .stat-label { font-size: 13px; color: var(--muted); }
+
+    /* ── SECTION COMMON ────────────────────────── */
+    section { padding: 80px 24px; }
+    .container { max-width: 1000px; margin: 0 auto; }
+    .section-title {
+      text-align: center; font-size: 32px;
+      font-weight: 800; margin-bottom: 12px;
+    }
+    .section-sub {
+      text-align: center; color: var(--muted);
+      font-size: 16px; margin-bottom: 48px;
+    }
+
+    /* ── HOW IT WORKS ──────────────────────────── */
+    .how-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+    }
+    .how-card {
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px; padding: 24px;
+    }
+    .how-icon {
+      font-size: 32px; margin-bottom: 12px; display: block;
+    }
+    .how-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .how-card p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    /* ── FEATURES ──────────────────────────────── */
+    #features { background: var(--surface); }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .feature-card {
+      background: var(--surface2);
+      border: 1px solid rgba(0,198,255,0.1);
+      border-radius: 14px; padding: 20px;
+      display: flex; gap: 14px; align-items: flex-start;
+    }
+    .feature-icon {
+      width: 42px; height: 42px;
+      background: rgba(0,198,255,0.1);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .feature-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .feature-card p { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+    /* ── DOWNLOAD SECTION ──────────────────────── */
+    .download-box {
+      background: linear-gradient(135deg, var(--surface), var(--surface2));
+      border: 1px solid rgba(0,198,255,0.2);
+      border-radius: 20px; padding: 48px 32px;
+      text-align: center; max-width: 640px; margin: 0 auto;
+    }
+    .download-box h2 { font-size: 28px; font-weight: 800; margin-bottom: 10px; }
+    .download-box p { color: var(--muted); margin-bottom: 28px; font-size: 15px; }
+
+    .version-badge {
+      display: inline-block;
+      background: rgba(0,230,118,0.1);
+      border: 1px solid rgba(0,230,118,0.3);
+      color: var(--green); border-radius: 6px;
+      padding: 3px 10px; font-size: 12px; font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    /* Download counter */
+    .download-counter {
+      margin-top: 20px;
+      font-size: 13px; color: var(--muted);
+    }
+    .download-counter span { color: var(--brand); font-weight: 700; }
+
+    /* ── UPDATES SECTION ───────────────────────── */
+    .changelog {
+      max-width: 640px; margin: 0 auto;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .changelog-item {
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-left: 3px solid var(--brand);
+      border-radius: 12px; padding: 18px 20px;
+    }
+    .changelog-item h3 {
+      font-size: 15px; font-weight: 700; margin-bottom: 6px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .changelog-item p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+    .changelog-date { font-size: 11px; color: var(--dim); margin-top: 6px; }
+    .tag-latest {
+      background: var(--brand); color: #000;
+      font-size: 10px; font-weight: 800;
+      padding: 2px 7px; border-radius: 4px;
+    }
+
+    /* ── FOOTER ────────────────────────────────── */
+    footer {
+      background: var(--surface);
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 40px 24px; text-align: center;
+    }
+    footer p { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+    footer a { color: var(--brand); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* ── NOTIFICATION BAR ──────────────────────── */
+    #update-bar {
+      display: none;
+      background: linear-gradient(135deg, var(--brand-deep), var(--brand));
+      color: #000; padding: 10px 20px;
+      text-align: center; font-size: 13px; font-weight: 700;
+      position: sticky; top: 60px; z-index: 99;
+    }
+    #update-bar a { color: #000; text-decoration: underline; }
+
+    /* ── RESPONSIVE ────────────────────────────── */
+    @media (max-width: 600px) {
+      .nav-links { display: none; }
+      .hero h1 { font-size: 36px; }
+      .hero p { font-size: 15px; }
+      section { padding: 48px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ UPDATE NOTIFICATION BAR (auto-shown when GitHub has a new release) ══ -->
+<div id="update-bar">
+  🚀 New version available!
+  <a id="update-link" href="#">Download now →</a>
+  <button onclick="document.getElementById('update-bar').style.display='none'"
+    style="background:none;border:none;cursor:pointer;color:#000;font-size:16px;margin-left:10px;">✕</button>
+</div>
+
+<!-- ══ NAV ═══════════════════════════════════════════════ -->
+<nav>
+  <span class="nav-brand">G2-Link</span>
+  <div class="nav-links">
+    <a href="#how">How It Works</a>
+    <a href="#features">Features</a>
+    <a href="#updates">Updates</a>
+    <a href="#download">Download</a>
+    <a href="https://github.com/G2-links/g2link" target="_blank">GitHub</a>
+  </div>
+</nav>
+
+<!-- ══ HERO ══════════════════════════════════════════════ -->
+<section class="hero">
+  <div class="hero-badge">
+    📡 Mesh Network · No Internet Required
+  </div>
+
+  <h1>
+    Communicate<br>
+    <span>Without Signal</span>
+  </h1>
+
+  <p>
+    G2-Link connects nearby phones into a mesh network.
+    Send messages in disasters, blackouts, and remote areas —
+    no internet, no SIM, no cell signal needed.
+  </p>
+
+  <div class="hero-buttons">
+    <a href="#download" class="btn-primary" id="hero-download-btn"
+      onclick="trackDownload('hero')">
+      ⬇ Download Free
+    </a>
+    <a href="#how" class="btn-secondary">
+      How It Works →
+    </a>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <span class="stat-number" id="download-count">—</span>
+      <span class="stat-label">Downloads</span>
+    </div>
+    <div class="stat">
+      <span class="stat-number">$0</span>
+      <span class="stat-label">Cost forever</span>
+    </div>
+    <div class="stat">
+      <span class="stat-number">8+</span>
+      <span class="stat-label">Hop range</span>
+    </div>
+    <div class="stat">
+      <span class="stat-number">AES-256</span>
+      <span class="stat-label">Encryption</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══ HOW IT WORKS ═══════════════════════════════════════ -->
+<section id="how">
+  <div class="container">
+    <h2 class="section-title">How G2-Link Works</h2>
+    <p class="section-sub">No infrastructure. Every phone is a node.</p>
+    <div class="how-grid">
+      <div class="how-card">
+        <span class="how-icon">📱</span>
+        <h3>Install on Any Android</h3>
+        <p>Download the APK — no app store needed. Works on Android 8.0+.</p>
+      </div>
+      <div class="how-card">
+        <span class="how-icon">📡</span>
+        <h3>Devices Auto-Connect</h3>
+        <p>G2-Link automatically finds nearby phones via Bluetooth and Wi-Fi Direct.</p>
+      </div>
+      <div class="how-card">
+        <span class="how-icon">🔀</span>
+        <h3>Messages Hop Device to Device</h3>
+        <p>Each phone acts as a relay — messages reach up to 8 hops away.</p>
+      </div>
+      <div class="how-card">
+        <span class="how-icon">📥</span>
+        <h3>Delivered When Reachable</h3>
+        <p>Messages are stored and forwarded automatically when a path becomes available.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FEATURES ═══════════════════════════════════════════ -->
+<section id="features">
+  <div class="container">
+    <h2 class="section-title">Everything You Need</h2>
+    <p class="section-sub">Built for real emergencies. Designed for non-technical users.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🚨</div>
+        <div>
+          <h3>SOS Broadcast</h3>
+          <p>One tap sends an emergency alert to every nearby device in the mesh.</p>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💬</div>
+        <div>
+          <h3>Direct Messaging</h3>
+          <p>Chat with specific contacts. Messages route through the mesh automatically.</p>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔐</div>
+        <div>
+          <h3>End-to-End Encrypted</h3>
+          <p>AES-256-GCM encryption. Keys generated locally. No server involved.</p>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📍</div>
+        <div>
+          <h3>Location Sharing</h3>
+          <p>Share your GPS coordinates via the mesh. Works fully offline.</p>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📲</div>
+        <div>
+          <h3>QR Contact Pairing</h3>
+          <p>Add contacts offline by scanning a QR code — no account needed.</p>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔋</div>
+        <div>
+          <h3>Battery Optimized</h3>
+          <p>Emergency, Normal, and Saver modes adapt to your situation.</p>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔄</div>
+        <div>
+          <h3>Store &amp; Forward</h3>
+          <p>Messages stored if recipient unreachable. Auto-delivered when path opens.</p>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📤</div>
+        <div>
+          <h3>Share App via Bluetooth</h3>
+          <p>Install G2-Link on a friend's phone directly — zero internet needed.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ DOWNLOAD ════════════════════════════════════════════ -->
+<section id="download">
+  <div class="container">
+    <div class="download-box">
+      <div class="version-badge" id="version-badge">● Latest Version</div>
+      <h2>Download G2-Link</h2>
+      <p>Free forever. No account. No ads. No tracking.<br>Android 8.0 and above.</p>
+
+      <a href="#" id="main-download-btn" class="btn-primary"
+        onclick="trackDownload('main')" style="font-size:18px; padding:16px 36px;">
+        ⬇ Download APK (Android)
+      </a>
+
+      <div style="margin-top:16px;">
+        <a href="https://github.com/G2-links/g2link"
+          class="btn-secondary" target="_blank" style="font-size:13px; padding:10px 18px;">
+          View on GitHub →
+        </a>
+      </div>
+
+      <div class="download-counter">
+        Total downloads: <span id="total-downloads">Loading...</span>
+      </div>
+
+      <p style="margin-top:20px; font-size:12px; color:var(--dim);">
+        APK hosted on GitHub — Microsoft's global CDN.<br>
+        Enable "Install from unknown sources" in Android settings.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ UPDATES / CHANGELOG ════════════════════════════════ -->
+<section id="updates">
+  <div class="container">
+    <h2 class="section-title">Updates</h2>
+    <p class="section-sub">G2-Link notifies you in-app and via the mesh when a new version is available.</p>
+
+    <div class="changelog" id="changelog">
+      <!-- Populated dynamically from GitHub API -->
+      <div class="changelog-item">
+        <h3>
+          <span id="latest-version-text">v1.0.0</span>
+          <span class="tag-latest">LATEST</span>
+        </h3>
+        <p id="latest-notes">Initial release — G2-Link offline mesh communication.</p>
+        <div class="changelog-date" id="latest-date">Loading release info...</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FOOTER ═════════════════════════════════════════════ -->
+<footer>
+  <p style="font-size:22px; font-weight:900; color:var(--brand); margin-bottom:12px;">G2-Link</p>
+  <p>Communicate without internet, SIM, or signal.</p>
+  <p style="margin-top:8px;">
+    <a href="https://github.com/G2-links/g2link" target="_blank">GitHub</a> &nbsp;·&nbsp;
+    <a href="https://github.com/G2-links/g2link/releases" target="_blank">All Releases</a> &nbsp;·&nbsp;
+    <a href="https://github.com/G2-links/g2link/issues" target="_blank">Report Issue</a>
+  </p>
+  <p style="margin-top:16px; font-size:11px;">
+    Free forever · No server · No tracking · Open source
+  </p>
+</footer>
+
+<!-- ══ JAVASCRIPT ═════════════════════════════════════════ -->
+<script>
+  // ── CONFIG — update these to your GitHub details ──────
+  const GITHUB_OWNER = 'G2-links';
+  const GITHUB_REPO  = 'g2link';
+  const APK_ASSET_NAME = 'app-release.apk'; // Must match your release asset name
+
+  const RELEASES_API =
+    `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest`;
+  const RELEASES_PAGE =
+    `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest`;
+
+  // ── FETCH LATEST RELEASE FROM GITHUB ─────────────────
+  async function fetchLatestRelease() {
+    try {
+      const res = await fetch(RELEASES_API, {
+        headers: { 'Accept': 'application/vnd.github.v3+json' }
+      });
+      if (!res.ok) throw new Error('API error');
+      const data = await res.json();
+
+      // Find APK asset
+      const apk = data.assets?.find(a => a.name.endsWith('.apk'));
+      const downloadUrl = apk?.browser_download_url ?? RELEASES_PAGE;
+      const downloadCount = apk?.download_count ?? 0;
+      const version = data.tag_name ?? 'v1.0.0';
+      const notes = data.body?.split('\n')[0] ?? 'Bug fixes and improvements';
+      const date = data.published_at
+        ? new Date(data.published_at).toLocaleDateString('en-US',
+            { year:'numeric', month:'long', day:'numeric' })
+        : '';
+
+      // Update download buttons
+      document.getElementById('main-download-btn').href = downloadUrl;
+      document.getElementById('hero-download-btn').href = downloadUrl;
+
+      // Update version badge
+      document.getElementById('version-badge').textContent = `● ${version}`;
+      document.getElementById('latest-version-text').textContent = version;
+      document.getElementById('latest-notes').textContent = notes;
+      document.getElementById('latest-date').textContent = `Released: ${date}`;
+
+      // Download counter
+      const totalStr = downloadCount > 1000
+        ? (downloadCount / 1000).toFixed(1) + 'K'
+        : downloadCount.toString();
+      document.getElementById('total-downloads').textContent = totalStr || '—';
+      document.getElementById('download-count').textContent = totalStr || '—';
+
+      // Check if newer than stored version
+      checkForUpdateBanner(version, downloadUrl);
+
+    } catch (e) {
+      // Fallback gracefully — GitHub might be rate limited
+      document.getElementById('main-download-btn').href = RELEASES_PAGE;
+      document.getElementById('hero-download-btn').href = RELEASES_PAGE;
+      document.getElementById('total-downloads').textContent = 'See GitHub';
+      console.log('Could not fetch release info:', e.message);
+    }
+  }
+
+  // ── UPDATE NOTIFICATION BAR ───────────────────────────
+  function checkForUpdateBanner(latestVersion, downloadUrl) {
+    const stored = localStorage.getItem('g2link_last_seen_version');
+    if (stored && stored !== latestVersion) {
+      const bar = document.getElementById('update-bar');
+      const link = document.getElementById('update-link');
+      link.href = downloadUrl;
+      link.textContent = `Download ${latestVersion} now →`;
+      bar.style.display = 'block';
+    }
+    localStorage.setItem('g2link_last_seen_version', latestVersion);
+  }
+
+  // ── DOWNLOAD TRACKING ─────────────────────────────────
+  // Uses localStorage to count unique sessions (no server needed)
+  // For real analytics: Plausible, Cloudflare, or Google Analytics
+  function trackDownload(source) {
+    const key = 'g2link_downloads';
+    const count = parseInt(localStorage.getItem(key) || '0') + 1;
+    localStorage.setItem(key, count);
+    // If you add Plausible: plausible('Download', {props: {source}})
+    // If you add GA: gtag('event', 'download', {event_category: source})
+    console.log(`Download clicked from: ${source}`);
+  }
+
+  // ── SMOOTH SCROLL FOR ANCHOR LINKS ───────────────────
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+
+  // ── INIT ──────────────────────────────────────────────
+  fetchLatestRelease();
+</script>
+</body>
+</html>
