@@ -1,279 +1,348 @@
-package com.g2link.connect.ui.screen
+package com.disastermesh.connect.ui.screen
 
-import androidx.compose.animation.*
-import androidx.compose.foundation.*
+import android.graphics.Bitmap
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.g2link.connect.ui.theme.G2Colors
-// ✅ FIX: OnboardingViewModel lives in disastermesh package, not g2link
-import com.disastermesh.connect.ui.viewmodel.OnboardingViewModel
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.MultiFormatWriter
+import com.google.zxing.common.BitMatrix
+import com.disastermesh.connect.ui.theme.MeshColors
+import com.disastermesh.connect.ui.viewmodel.QrViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
+// ═══════════════════════════════════════════════════════════
+// QR CODE SHOW SCREEN — Display my QR for others to scan
+// ═══════════════════════════════════════════════════════════
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OnboardingScreen(
-    onComplete: () -> Unit,
-    viewModel: OnboardingViewModel = hiltViewModel()
+fun QrShowScreen(
+    onBack: () -> Unit,
+    viewModel: QrViewModel = hiltViewModel()
 ) {
-    var displayName by remember { mutableStateOf("") }
-    var phoneNumber by remember { mutableStateOf("") }
-    var showPhoneField by remember { mutableStateOf(false) }
-    var nameError by remember { mutableStateOf(false) }
-    val keyboard = LocalSoftwareKeyboardController.current
-    val phoneFocus = remember { FocusRequester() }
+    val qrContent by viewModel.qrContent.collectAsState(initial = "")
+    val displayName by viewModel.displayName.collectAsState(initial = "")
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(G2Colors.Background, Color(0xFF060C1A))
-                )
+    val qrBitmap: Bitmap? = remember(qrContent) {
+        if (qrContent.isNotBlank()) generateQrBitmap(qrContent, 600) else null
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, "Back", tint = Color.White)
+                    }
+                },
+                title = { Text("My QR Code", color = Color.White, fontWeight = FontWeight.Bold) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MeshColors.Surface)
             )
-    ) {
+        },
+        containerColor = MeshColors.Background
+    ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp)
-                .verticalScroll(rememberScrollState()),
+                .padding(padding)
+                .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(18.dp)
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            Spacer(Modifier.height(48.dp))
-
-            // ── Logo ──────────────────────────────────────
-            Box(
-                modifier = Modifier
-                    .size(110.dp)
-                    .background(
-                        Brush.radialGradient(
-                            colors = listOf(
-                                G2Colors.Brand.copy(alpha = 0.3f),
-                                Color.Transparent
-                            )
-                        ),
-                        CircleShape
-                    )
-                    .border(2.dp,
-                        Brush.linearGradient(listOf(G2Colors.Brand, G2Colors.BrandDeep)),
-                        CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Hub,
-                    contentDescription = null,
-                    tint = G2Colors.Brand,
-                    modifier = Modifier.size(52.dp)
-                )
-            }
-
-            // ── Brand name ────────────────────────────────
-            Text(
-                text = "G2-Link",
-                fontSize = 36.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = Color.White
-            )
-            Text(
-                text = "Communicate without internet,\nSIM card, or phone signal",
-                fontSize = 15.sp,
-                color = Color(0xFF8BA0BF),
-                textAlign = TextAlign.Center,
-                lineHeight = 22.sp
-            )
-
             Spacer(Modifier.height(8.dp))
 
-            // ── Feature chips ─────────────────────────────
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                G2FeatureChip(Icons.Default.Hub,           "Mesh Network")
-                G2FeatureChip(Icons.Default.Lock,          "Encrypted")
-                G2FeatureChip(Icons.Default.OfflineBolt,   "Offline First")
-            }
+            Text(
+                "Let others scan this to add you as a contact",
+                color = Color(0xFF8B949E),
+                fontSize = 14.sp,
+                textAlign = TextAlign.Center
+            )
 
-            Spacer(Modifier.height(8.dp))
-
-            // ── Name input ────────────────────────────────
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    "Your Name",
-                    fontSize = 13.sp,
-                    color = Color(0xFF8BA0BF),
-                    modifier = Modifier.padding(bottom = 6.dp)
-                )
-                OutlinedTextField(
-                    value = displayName,
-                    onValueChange = { displayName = it; nameError = false },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Enter your name", color = Color(0xFF4A5568)) },
-                    singleLine = true,
-                    isError = nameError,
-                    supportingText = if (nameError) {
-                        { Text("Name is required", color = MaterialTheme.colorScheme.error) }
-                    } else null,
-                    keyboardOptions = KeyboardOptions(
-                        capitalization = KeyboardCapitalization.Words,
-                        imeAction = if (showPhoneField) ImeAction.Next else ImeAction.Done
-                    ),
-                    keyboardActions = KeyboardActions(
-                        onDone = { keyboard?.hide() },
-                        onNext = { phoneFocus.requestFocus() }
-                    ),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = G2Colors.Brand,
-                        unfocusedBorderColor = Color(0xFF1E2A3A),
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        cursorColor = G2Colors.Brand,
-                        focusedContainerColor = G2Colors.SurfaceVariant,
-                        unfocusedContainerColor = G2Colors.SurfaceVariant
-                    ),
-                    shape = RoundedCornerShape(14.dp),
-                    leadingIcon = {
-                        Icon(Icons.Default.Person, null, tint = Color(0xFF4A5568))
-                    }
-                )
-            }
-
-            // ── Phone (optional) ──────────────────────────
-            if (!showPhoneField) {
-                TextButton(onClick = { showPhoneField = true }) {
-                    Icon(Icons.Default.AddCircleOutline, null,
-                        tint = G2Colors.Brand, modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(6.dp))
-                    Text("Add phone number (optional)", color = G2Colors.Brand, fontSize = 13.sp)
-                }
-            } else {
-                AnimatedVisibility(visible = true, enter = expandVertically() + fadeIn()) {
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Text("Phone (optional)", fontSize = 13.sp, color = Color(0xFF8BA0BF),
-                            modifier = Modifier.padding(bottom = 6.dp))
-                        OutlinedTextField(
-                            value = phoneNumber,
-                            onValueChange = { phoneNumber = it },
-                            modifier = Modifier.fillMaxWidth().focusRequester(phoneFocus),
-                            placeholder = { Text("+1 555 000 0000", color = Color(0xFF4A5568)) },
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Phone,
-                                imeAction = ImeAction.Done
-                            ),
-                            keyboardActions = KeyboardActions(onDone = { keyboard?.hide() }),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = G2Colors.Brand,
-                                unfocusedBorderColor = Color(0xFF1E2A3A),
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White,
-                                focusedContainerColor = G2Colors.SurfaceVariant,
-                                unfocusedContainerColor = G2Colors.SurfaceVariant
-                            ),
-                            shape = RoundedCornerShape(14.dp),
-                            leadingIcon = {
-                                Icon(Icons.Default.Phone, null, tint = Color(0xFF4A5568))
-                            }
-                        )
-                    }
-                }
-            }
-
-            Spacer(Modifier.height(4.dp))
-
-            // ── Start button ──────────────────────────────
-            Button(
-                onClick = {
-                    if (displayName.isBlank()) {
-                        nameError = true
-                    } else {
-                        // ✅ FIX: saveProfile now resolves correctly from disastermesh ViewModel
-                        viewModel.saveProfile(displayName.trim(), phoneNumber.takeIf { it.isNotBlank() })
-                        onComplete()
-                    }
-                },
-                modifier = Modifier.fillMaxWidth().height(58.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                border = null,
-                enabled = displayName.isNotBlank()
+            // ── QR Code Card ──────────────────────────────
+            Surface(
+                color = Color.White,
+                shape = RoundedCornerShape(20.dp),
+                shadowElevation = 8.dp,
+                modifier = Modifier.size(280.dp)
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(
-                            if (displayName.isNotBlank())
-                                Brush.horizontalGradient(listOf(G2Colors.BrandDeep, G2Colors.Brand))
-                            else
-                                Brush.horizontalGradient(listOf(G2Colors.SurfaceVariant, G2Colors.SurfaceVariant)),
-                            RoundedCornerShape(16.dp)
-                        ),
+                        .padding(20.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            "Join the Mesh",
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = if (displayName.isNotBlank()) Color.Black else Color(0xFF4A5568)
+                    if (qrBitmap != null) {
+                        Image(
+                            bitmap = qrBitmap.asImageBitmap(),
+                            contentDescription = "QR Code",
+                            modifier = Modifier.fillMaxSize()
                         )
-                        Icon(
-                            Icons.Default.ArrowForward,
-                            null,
-                            tint = if (displayName.isNotBlank()) Color.Black else Color(0xFF4A5568)
-                        )
+                    } else {
+                        CircularProgressIndicator(color = MeshColors.Primary)
                     }
                 }
             }
 
+            // ── Name Badge ────────────────────────────────
+            Surface(
+                color = MeshColors.SurfaceVariant,
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Icon(Icons.Default.Person, null, tint = MeshColors.Primary, modifier = Modifier.size(20.dp))
+                    Text(
+                        displayName.ifBlank { "Your Name" },
+                        color = Color.White,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 16.sp
+                    )
+                }
+            }
+
+            // ── Info card ─────────────────────────────────
+            Surface(
+                color = MeshColors.Primary.copy(alpha = 0.1f),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(14.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Icon(Icons.Default.Info, null, tint = MeshColors.Primary, modifier = Modifier.size(20.dp))
+                    Text(
+                        "Works completely offline. No internet needed to pair with contacts.",
+                        color = Color(0xFF8B949E),
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// QR CODE SCAN SCREEN — Camera scan to add contact
+// ═══════════════════════════════════════════════════════════
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun QrScanScreen(
+    onBack: () -> Unit,
+    onContactAdded: () -> Unit,
+    viewModel: QrViewModel = hiltViewModel()
+) {
+    var scanResult by remember { mutableStateOf<String?>(null) }
+    var addSuccess by remember { mutableStateOf(false) }
+    var addError by remember { mutableStateOf(false) }
+
+    // ✅ FIX: Use rememberCoroutineScope instead of the broken recursive extension function
+    val scope = rememberCoroutineScope()
+
+    val context = LocalContext.current
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, "Back", tint = Color.White)
+                    }
+                },
+                title = { Text("Scan QR Code", color = Color.White, fontWeight = FontWeight.Bold) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MeshColors.Surface)
+            )
+        },
+        containerColor = MeshColors.Background
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Spacer(Modifier.height(16.dp))
+
+            // ── Camera Viewfinder Placeholder ─────────────
+            Box(
+                modifier = Modifier
+                    .size(280.dp)
+                    .background(Color(0xFF0D1117), RoundedCornerShape(16.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Icon(
+                        Icons.Default.QrCodeScanner,
+                        null,
+                        tint = MeshColors.Primary,
+                        modifier = Modifier.size(64.dp)
+                    )
+                    Text(
+                        "Point camera at\ncontact's QR code",
+                        color = Color(0xFF8B949E),
+                        textAlign = TextAlign.Center,
+                        fontSize = 14.sp
+                    )
+                }
+
+                // Corner markers
+                QrCornerMarkers()
+            }
+
             Text(
-                "🔒 No account. No servers. No tracking.\nYour data never leaves your device.",
-                fontSize = 12.sp,
-                color = Color(0xFF4A5568),
-                textAlign = TextAlign.Center,
-                lineHeight = 18.sp
+                "Or enter the code manually",
+                color = Color(0xFF6E7681),
+                fontSize = 13.sp
             )
 
-            Spacer(Modifier.height(24.dp))
+            // ── Manual Input ─────────────────────────────
+            var manualInput by remember { mutableStateOf("") }
+            OutlinedTextField(
+                value = manualInput,
+                onValueChange = { manualInput = it },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("DM:deviceId:name", color = Color(0xFF8B949E)) },
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MeshColors.Primary,
+                    unfocusedBorderColor = Color(0xFF30363D),
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    cursorColor = MeshColors.Primary
+                ),
+                shape = RoundedCornerShape(12.dp),
+                leadingIcon = {
+                    Icon(Icons.Default.Link, null, tint = Color(0xFF8B949E))
+                }
+            )
+
+            Button(
+                onClick = {
+                    val success = viewModel.addContactFromQr(manualInput.trim())
+                    if (success) {
+                        addSuccess = true
+                        // ✅ FIX: Use the remembered scope with proper imported launch/delay
+                        scope.launch {
+                            delay(1500)
+                            onContactAdded()
+                        }
+                    } else {
+                        addError = true
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MeshColors.Primary),
+                enabled = manualInput.isNotBlank()
+            ) {
+                Icon(Icons.Default.PersonAdd, null)
+                Spacer(Modifier.width(8.dp))
+                Text("Add Contact", fontWeight = FontWeight.Bold)
+            }
+
+            // ── Status Messages ───────────────────────────
+            if (addSuccess) {
+                Surface(
+                    color = MeshColors.Connected.copy(alpha = 0.15f),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.CheckCircle, null, tint = MeshColors.Connected)
+                        Text("Contact added successfully!", color = MeshColors.Connected)
+                    }
+                }
+            }
+
+            if (addError) {
+                Surface(
+                    color = MeshColors.Emergency.copy(alpha = 0.15f),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Error, null, tint = MeshColors.Emergency)
+                        Text("Invalid QR code format", color = MeshColors.Emergency)
+                    }
+                }
+            }
         }
     }
 }
 
+// ─── QR corner markers ────────────────────────────────────
 @Composable
-private fun G2FeatureChip(icon: ImageVector, label: String) {
-    Surface(
-        color = G2Colors.SurfaceVariant,
-        shape = RoundedCornerShape(20.dp),
-        border = BorderStroke(1.dp, G2Colors.Brand.copy(alpha = 0.3f))
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(5.dp)
-        ) {
-            Icon(icon, null, tint = G2Colors.Brand, modifier = Modifier.size(14.dp))
-            Text(label, fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.Medium)
-        }
+private fun QrCornerMarkers() {
+    val cornerColor = MeshColors.Primary
+    val cornerSize = 24.dp
+    val strokeWidth = 3.dp
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Modifier.padding(12.dp)
     }
 }
+
+// ═══════════════════════════════════════════════════════════
+// QR BITMAP GENERATOR
+// Uses ZXing to generate QR from string
+// ═══════════════════════════════════════════════════════════
+fun generateQrBitmap(content: String, size: Int): Bitmap? {
+    return try {
+        val bitMatrix: BitMatrix = MultiFormatWriter().encode(
+            content,
+            BarcodeFormat.QR_CODE,
+            size, size
+        )
+        val width = bitMatrix.width
+        val height = bitMatrix.height
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        for (x in 0 until width) {
+            for (y in 0 until height) {
+                bitmap.setPixel(
+                    x, y,
+                    if (bitMatrix[x, y]) android.graphics.Color.BLACK
+                    else android.graphics.Color.WHITE
+                )
+            }
+        }
+        bitmap
+    } catch (e: Exception) {
+        null
+    }
+}
+
+// ✅ FIX: The old recursive "launch" extension has been removed entirely.
+//    Use rememberCoroutineScope() + kotlinx.coroutines.launch (imported at top).
