@@ -28,7 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.g2link.connect.ui.theme.G2Colors
-import com.g2link.connect.ui.viewmodel.OnboardingViewModel
+// ✅ FIX: OnboardingViewModel lives in disastermesh package, not g2link
+import com.disastermesh.connect.ui.viewmodel.OnboardingViewModel
 
 @Composable
 fun OnboardingScreen(
@@ -204,6 +205,7 @@ fun OnboardingScreen(
                     if (displayName.isBlank()) {
                         nameError = true
                     } else {
+                        // ✅ FIX: saveProfile now resolves correctly from disastermesh ViewModel
                         viewModel.saveProfile(displayName.trim(), phoneNumber.takeIf { it.isNotBlank() })
                         onComplete()
                     }
