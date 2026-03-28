@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap  // ✅ FIX: proper import for asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -22,6 +23,8 @@ import com.g2link.connect.sharing.ApkShareManager
 import com.g2link.connect.ui.theme.G2Colors
 import com.g2link.connect.update.UpdateInfo
 import com.g2link.connect.update.UpdateState
+// ✅ FIX: generateQrBitmap is defined in the disastermesh QrScreens.kt, must be imported
+import com.disastermesh.connect.ui.screen.generateQrBitmap
 
 // ═══════════════════════════════════════════════════════════
 // UPDATE BANNER — Shows at top of ChatList when update exists
@@ -116,6 +119,7 @@ fun ShareAppScreen(
 ) {
     val apkSize = remember { apkShareManager.getApkSizeMb() }
     val qrContent = remember { apkShareManager.getDownloadQrContent() }
+    // ✅ FIX: generateQrBitmap now imported from com.disastermesh.connect.ui.screen
     val qrBitmap = remember(qrContent) { generateQrBitmap(qrContent, 500) }
 
     Scaffold(
@@ -222,7 +226,8 @@ fun ShareAppScreen(
                         modifier = Modifier.padding(12.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        androidx.compose.foundation.Image(
+                        Image(
+                            // ✅ FIX: asImageBitmap() now resolves via the proper import at top
                             bitmap = qrBitmap.asImageBitmap(),
                             contentDescription = "G2-Link download QR",
                             modifier = Modifier.fillMaxSize()
@@ -307,6 +312,6 @@ private fun ShareMethodCard(
     }
 }
 
-// Extension for bitmap
-private fun android.graphics.Bitmap.asImageBitmap() =
-    androidx.compose.ui.graphics.asImageBitmap(this)
+// ✅ FIX: Removed the broken private extension that tried to call
+//    androidx.compose.ui.graphics.asImageBitmap(this) as a non-extension.
+//    The proper import at the top of this file handles it cleanly.
