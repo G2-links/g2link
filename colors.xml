@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_background">#090E18</color>
+    <color name="brand">#00C6FF</color>
+    <color name="brand_deep">#0072FF</color>
+    <color name="background">#090E18</color>
+    <color name="surface">#101828</color>
+    <color name="emergency">#FF1744</color>
+    <color name="connected">#00E676</color>
+</resources>
