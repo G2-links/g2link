@@ -7,7 +7,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
-import com.disastermesh.connect.R
+import com.g2link.connect.R  // ✅ FIX: namespace is com.g2link.connect, not com.disastermesh.connect
 import com.disastermesh.connect.mesh.MeshEvent
 import com.disastermesh.connect.mesh.OfflineMeshManager
 import com.disastermesh.connect.ui.MainActivity
@@ -168,8 +168,8 @@ class MeshForegroundService : Service() {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("DisasterMesh Active")
             .setContentText(statusText)
-            .setSmallIcon(R.drawable.ic_mesh_notification)
-            .setContentIntent(pendingIntent)
+            .setSmallIcon(R.drawable.ic_mesh_notification)  // ✅ Resolves now that R is correct
+            .setContentIntent(pendingIntent)                 // ✅ Resolves as chain is unbroken
             .addAction(0, "Stop", stopIntent)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -221,9 +221,9 @@ class MeshForegroundService : Service() {
     }
 }
 
-// ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // BOOT RECEIVER — Restart service after device reboot
-// ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED ||
