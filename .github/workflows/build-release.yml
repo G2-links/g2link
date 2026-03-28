@@ -26,7 +26,7 @@ jobs:
 
       # ── 3. Make Gradle executable ─────────────────────
       - name: Grant Gradle execute permission
-        run: chmod +x gradlew
+        run: chmod +x android/gradlew
 
       # ── 4. Cache Gradle dependencies ──────────────────
       - name: Cache Gradle packages
@@ -40,7 +40,7 @@ jobs:
 
       # ── 5. Build Release APK ──────────────────────────
       - name: Build Release APK
-        run: ./gradlew assembleRelease
+        run: ./android/gradlew assembleRelease
         # Note: For signed release APK, add signing config:
         # env:
         #   SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
@@ -49,13 +49,13 @@ jobs:
 
       # ── 6. Build Debug APK (for testing) ─────────────
       - name: Build Debug APK
-        run: ./gradlew assembleDebug
+        run: ./android/gradlew assembleDebug
 
       # ── 7. Get version name ───────────────────────────
       - name: Get version name
         id: version
         run: |
-          VERSION=$(grep 'versionName' app/build.gradle.kts | grep -o '"[^"]*"' | tr -d '"')
+          VERSION=$(grep 'versionName' android/app/build.gradle.kts | grep -o '"[^"]*"' | tr -d '"')
           echo "VERSION_NAME=$VERSION" >> $GITHUB_OUTPUT
           echo "Building version: $VERSION"
 
