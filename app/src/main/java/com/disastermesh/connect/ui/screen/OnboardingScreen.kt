@@ -1,4 +1,4 @@
-package com.disastermesh.connect.ui.screen
+package com.g2link.connect.ui.screen
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.*
@@ -17,6 +17,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -26,7 +27,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.disastermesh.connect.ui.theme.MeshColors
+import com.g2link.connect.ui.theme.G2Colors
+// ✅ FIX: OnboardingViewModel lives in disastermesh package, not g2link
 import com.disastermesh.connect.ui.viewmodel.OnboardingViewModel
 
 @Composable
@@ -38,7 +40,6 @@ fun OnboardingScreen(
     var phoneNumber by remember { mutableStateOf("") }
     var showPhoneField by remember { mutableStateOf(false) }
     var nameError by remember { mutableStateOf(false) }
-
     val keyboard = LocalSoftwareKeyboardController.current
     val phoneFocus = remember { FocusRequester() }
 
@@ -47,10 +48,7 @@ fun OnboardingScreen(
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(
-                        MeshColors.Background,
-                        Color(0xFF0A1628)
-                    )
+                    colors = listOf(G2Colors.Background, Color(0xFF060C1A))
                 )
             )
     ) {
@@ -60,74 +58,75 @@ fun OnboardingScreen(
                 .padding(24.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
             Spacer(Modifier.height(48.dp))
 
-            // ── App Icon / Logo ────────────────────────────
+            // ── Logo ──────────────────────────────────────
             Box(
                 modifier = Modifier
-                    .size(100.dp)
+                    .size(110.dp)
                     .background(
                         Brush.radialGradient(
-                            colors = listOf(MeshColors.Primary, Color(0xFF0A1628))
+                            colors = listOf(
+                                G2Colors.Brand.copy(alpha = 0.3f),
+                                Color.Transparent
+                            )
                         ),
                         CircleShape
-                    ),
+                    )
+                    .border(2.dp,
+                        Brush.linearGradient(listOf(G2Colors.Brand, G2Colors.BrandDeep)),
+                        CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.Hub,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = G2Colors.Brand,
                     modifier = Modifier.size(52.dp)
                 )
             }
 
-            // ── Title ─────────────────────────────────────
+            // ── Brand name ────────────────────────────────
             Text(
-                text = "DisasterMesh",
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
+                text = "G2-Link",
+                fontSize = 36.sp,
+                fontWeight = FontWeight.ExtraBold,
                 color = Color.White
             )
             Text(
-                text = "Communicate without internet,\nSIM cards, or phone signal",
-                fontSize = 16.sp,
-                color = Color(0xFF8B949E),
+                text = "Communicate without internet,\nSIM card, or phone signal",
+                fontSize = 15.sp,
+                color = Color(0xFF8BA0BF),
                 textAlign = TextAlign.Center,
                 lineHeight = 22.sp
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(8.dp))
 
-            // ── Feature Cards ─────────────────────────────
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                FeatureChip(Icons.Default.Wifi, "Mesh Network")
-                FeatureChip(Icons.Default.Lock, "Encrypted")
-                FeatureChip(Icons.Default.OfflineBolt, "Offline")
+            // ── Feature chips ─────────────────────────────
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                G2FeatureChip(Icons.Default.Hub,           "Mesh Network")
+                G2FeatureChip(Icons.Default.Lock,          "Encrypted")
+                G2FeatureChip(Icons.Default.OfflineBolt,   "Offline First")
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(8.dp))
 
-            // ── Name Input ────────────────────────────────
+            // ── Name input ────────────────────────────────
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    text = "Your Name",
-                    fontSize = 14.sp,
-                    color = Color(0xFF8B949E),
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    "Your Name",
+                    fontSize = 13.sp,
+                    color = Color(0xFF8BA0BF),
+                    modifier = Modifier.padding(bottom = 6.dp)
                 )
                 OutlinedTextField(
                     value = displayName,
-                    onValueChange = {
-                        displayName = it
-                        nameError = false
-                    },
+                    onValueChange = { displayName = it; nameError = false },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Enter your name", color = Color(0xFF8B949E)) },
+                    placeholder = { Text("Enter your name", color = Color(0xFF4A5568)) },
                     singleLine = true,
                     isError = nameError,
                     supportingText = if (nameError) {
@@ -142,59 +141,39 @@ fun OnboardingScreen(
                         onNext = { phoneFocus.requestFocus() }
                     ),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MeshColors.Primary,
-                        unfocusedBorderColor = Color(0xFF30363D),
+                        focusedBorderColor = G2Colors.Brand,
+                        unfocusedBorderColor = Color(0xFF1E2A3A),
                         focusedTextColor = Color.White,
                         unfocusedTextColor = Color.White,
-                        cursorColor = MeshColors.Primary
+                        cursorColor = G2Colors.Brand,
+                        focusedContainerColor = G2Colors.SurfaceVariant,
+                        unfocusedContainerColor = G2Colors.SurfaceVariant
                     ),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(14.dp),
                     leadingIcon = {
-                        Icon(
-                            Icons.Default.Person,
-                            contentDescription = null,
-                            tint = Color(0xFF8B949E)
-                        )
+                        Icon(Icons.Default.Person, null, tint = Color(0xFF4A5568))
                     }
                 )
             }
 
-            // ── Phone Number (Optional) ───────────────────
+            // ── Phone (optional) ──────────────────────────
             if (!showPhoneField) {
-                TextButton(
-                    onClick = { showPhoneField = true }
-                ) {
-                    Text(
-                        "Add phone number (optional)",
-                        color = MeshColors.Primary,
-                        fontSize = 14.sp
-                    )
+                TextButton(onClick = { showPhoneField = true }) {
+                    Icon(Icons.Default.AddCircleOutline, null,
+                        tint = G2Colors.Brand, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Add phone number (optional)", color = G2Colors.Brand, fontSize = 13.sp)
                 }
             } else {
-                AnimatedVisibility(
-                    visible = showPhoneField,
-                    enter = expandVertically() + fadeIn()
-                ) {
+                AnimatedVisibility(visible = true, enter = expandVertically() + fadeIn()) {
                     Column(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = "Phone Number (optional)",
-                            fontSize = 14.sp,
-                            color = Color(0xFF8B949E),
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                        Text(
-                            text = "Used to connect with contacts when internet is available",
-                            fontSize = 12.sp,
-                            color = Color(0xFF6E7681),
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
+                        Text("Phone (optional)", fontSize = 13.sp, color = Color(0xFF8BA0BF),
+                            modifier = Modifier.padding(bottom = 6.dp))
                         OutlinedTextField(
                             value = phoneNumber,
                             onValueChange = { phoneNumber = it },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .focusRequester(phoneFocus),
-                            placeholder = { Text("+1 555 000 0000", color = Color(0xFF8B949E)) },
+                            modifier = Modifier.fillMaxWidth().focusRequester(phoneFocus),
+                            placeholder = { Text("+1 555 000 0000", color = Color(0xFF4A5568)) },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Phone,
@@ -202,63 +181,76 @@ fun OnboardingScreen(
                             ),
                             keyboardActions = KeyboardActions(onDone = { keyboard?.hide() }),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = MeshColors.Primary,
-                                unfocusedBorderColor = Color(0xFF30363D),
+                                focusedBorderColor = G2Colors.Brand,
+                                unfocusedBorderColor = Color(0xFF1E2A3A),
                                 focusedTextColor = Color.White,
                                 unfocusedTextColor = Color.White,
-                                cursorColor = MeshColors.Primary
+                                focusedContainerColor = G2Colors.SurfaceVariant,
+                                unfocusedContainerColor = G2Colors.SurfaceVariant
                             ),
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(14.dp),
                             leadingIcon = {
-                                Icon(
-                                    Icons.Default.Phone,
-                                    contentDescription = null,
-                                    tint = Color(0xFF8B949E)
-                                )
+                                Icon(Icons.Default.Phone, null, tint = Color(0xFF4A5568))
                             }
                         )
                     }
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(4.dp))
 
-            // ── Continue Button ───────────────────────────
+            // ── Start button ──────────────────────────────
             Button(
                 onClick = {
                     if (displayName.isBlank()) {
                         nameError = true
                     } else {
-                        viewModel.saveProfile(
-                            displayName.trim(),
-                            phoneNumber.takeIf { it.isNotBlank() }
-                        )
+                        // ✅ FIX: saveProfile now resolves correctly from disastermesh ViewModel
+                        viewModel.saveProfile(displayName.trim(), phoneNumber.takeIf { it.isNotBlank() })
                         onComplete()
                     }
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
+                modifier = Modifier.fillMaxWidth().height(58.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MeshColors.Primary
-                ),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                border = null,
                 enabled = displayName.isNotBlank()
             ) {
-                Text(
-                    "Start Communicating",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(Modifier.width(8.dp))
-                Icon(Icons.Default.ArrowForward, contentDescription = null)
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            if (displayName.isNotBlank())
+                                Brush.horizontalGradient(listOf(G2Colors.BrandDeep, G2Colors.Brand))
+                            else
+                                Brush.horizontalGradient(listOf(G2Colors.SurfaceVariant, G2Colors.SurfaceVariant)),
+                            RoundedCornerShape(16.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Join the Mesh",
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = if (displayName.isNotBlank()) Color.Black else Color(0xFF4A5568)
+                        )
+                        Icon(
+                            Icons.Default.ArrowForward,
+                            null,
+                            tint = if (displayName.isNotBlank()) Color.Black else Color(0xFF4A5568)
+                        )
+                    }
+                }
             }
 
-            // ── Privacy note ──────────────────────────────
             Text(
-                text = "🔒 Your data never leaves your device.\nNo account, no servers, no tracking.",
+                "🔒 No account. No servers. No tracking.\nYour data never leaves your device.",
                 fontSize = 12.sp,
-                color = Color(0xFF6E7681),
+                color = Color(0xFF4A5568),
                 textAlign = TextAlign.Center,
                 lineHeight = 18.sp
             )
@@ -269,19 +261,19 @@ fun OnboardingScreen(
 }
 
 @Composable
-private fun FeatureChip(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String) {
+private fun G2FeatureChip(icon: ImageVector, label: String) {
     Surface(
-        color = Color(0xFF161B22),
+        color = G2Colors.SurfaceVariant,
         shape = RoundedCornerShape(20.dp),
-        border = BorderStroke(1.dp, Color(0xFF30363D))
+        border = BorderStroke(1.dp, G2Colors.Brand.copy(alpha = 0.3f))
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.spacedBy(5.dp)
         ) {
-            Icon(icon, contentDescription = null, tint = MeshColors.Primary, modifier = Modifier.size(16.dp))
-            Text(label, fontSize = 12.sp, color = Color.White)
+            Icon(icon, null, tint = G2Colors.Brand, modifier = Modifier.size(14.dp))
+            Text(label, fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.Medium)
         }
     }
 }
