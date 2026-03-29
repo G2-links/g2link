@@ -16,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -100,8 +99,11 @@ fun UpdateBanner(
                         onClick = onDismiss,
                         modifier = Modifier.size(28.dp)
                     ) {
-                        Icon(Icons.Default.Close, null, tint = Color.White.copy(alpha = 0.7f),
-                            modifier = Modifier.size(16.dp))
+                        Icon(
+                            Icons.Default.Close, null,
+                            tint = Color.White.copy(alpha = 0.7f),
+                            modifier = Modifier.size(16.dp)
+                        )
                     }
                 }
             }
@@ -139,7 +141,6 @@ fun ShareAppScreen(
         },
         containerColor = G2Colors.Background
     ) { padding ->
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -149,7 +150,6 @@ fun ShareAppScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-
             Surface(
                 color = G2Colors.SurfaceVariant,
                 shape = RoundedCornerShape(16.dp),
@@ -166,19 +166,10 @@ fun ShareAppScreen(
                             .background(G2Colors.BrandGlow, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            Icons.Default.Hub,
-                            null,
-                            tint = G2Colors.Brand,
-                            modifier = Modifier.size(34.dp)
-                        )
+                        Icon(Icons.Default.Hub, null, tint = G2Colors.Brand, modifier = Modifier.size(34.dp))
                     }
                     Text("G2-Link", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
-                    Text(
-                        "Offline Mesh Communication",
-                        color = Color(0xFF8BA0BF),
-                        fontSize = 13.sp
-                    )
+                    Text("Offline Mesh Communication", color = Color(0xFF8BA0BF), fontSize = 13.sp)
                     Text(
                         "Works without internet or cell signal",
                         color = Color(0xFF6E7681),
@@ -250,10 +241,16 @@ fun ShareAppScreen(
                     )
                 }
             }
+
             Spacer(Modifier.height(16.dp))
         }
     }
 }
+
+// ═══════════════════════════════════════════════════════════
+// SHARE METHOD CARD
+// ✅ FIX: Restored 3 missing closing braces (Row, Surface, function)
+// ═══════════════════════════════════════════════════════════
 
 @Composable
 private fun ShareMethodCard(
@@ -284,17 +281,19 @@ private fun ShareMethodCard(
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(title, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-        Text(subtitle, color = Color(0xFF8BA0BF), fontSize = 12.sp, lineHeight = 16.sp)
-    }
-    Button(
-        onClick = onClick,
-        colors = ButtonDefaults.buttonColors(containerColor = color),
-        shape = RoundedCornerShape(10.dp),
-        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
-    ) {
-        Text(buttonLabel, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.Black)
-    }
-}
+                Text(subtitle, color = Color(0xFF8BA0BF), fontSize = 12.sp, lineHeight = 16.sp)
+            }
+            Button(
+                onClick = onClick,
+                colors = ButtonDefaults.buttonColors(containerColor = color),
+                shape = RoundedCornerShape(10.dp),
+                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+            ) {
+                Text(buttonLabel, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+            }
+        }  // ✅ closes Row
+    }  // ✅ closes Surface
+}  // ✅ closes function
 
 // ═══════════════════════════════════════════════════════════
 // QR UTILITY
