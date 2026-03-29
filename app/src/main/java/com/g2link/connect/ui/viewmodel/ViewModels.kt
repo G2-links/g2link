@@ -1,8 +1,4 @@
-package com.g2link.connect.ui.viewmodel // UPDATED
+package com.g2link.connect.ui.viewmodel
 
-import androidx.lifecycle.ViewModel
-import com.g2link.connect.service.MeshForegroundService // UPDATED
-// ... other imports ...
-
-// Ensure all other imports in this file starting with 
-// com.disastermesh are changed to com.g2link
+// ViewModels will be added here as screens are built out.
+// Currently the app uses PermissionRequestScreen which needs no ViewModel.
