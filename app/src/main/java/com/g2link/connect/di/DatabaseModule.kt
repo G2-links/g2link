@@ -1,7 +1,7 @@
 package com.g2link.connect.di
 
 import android.content.Context
-import androidx.room.Rooma
+import androidx.room.Room
 import com.g2link.connect.data.local.MeshDatabase
 import com.g2link.connect.data.local.dao.*
 import dagger.Module
