@@ -1,4 +1,4 @@
-package com.g2link.connect.ui // CHANGED FROM disastermesh
+package com.g2link.connect.ui
 
 import android.Manifest
 import android.os.Build
@@ -13,10 +13,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
-import com.g2link.connect.service.MeshForegroundService // CHANGED
-import com.g2link.connect.ui.navigation.MeshNavHost // CHANGED
-import com.g2link.connect.ui.screen.PermissionRequestScreen // CHANGED
-import com.g2link.connect.ui.theme.G2LinkTheme // CHANGED FROM DisasterMeshTheme
+import com.g2link.connect.service.MeshForegroundService
+import com.g2link.connect.ui.navigation.MeshNavHost
+import com.g2link.connect.ui.screen.PermissionRequestScreen
+import com.g2link.connect.ui.theme.G2LinkTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -72,14 +72,15 @@ class MainActivity : ComponentActivity() {
         if (permissionsGranted) startMeshService()
 
         setContent {
-            G2LinkTheme { // UPDATED THEME NAME
+            G2LinkTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
                     if (!permissionsGranted) {
+                        // FIXED: Parameter name changed to match PermissionRequestScreen.kt
                         PermissionRequestScreen(
-                            onRequestPermissions = {
+                            onPermissionsGranted = {
                                 permissionLauncher.launch(requiredPermissions)
                             }
                         )
@@ -90,10 +91,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
     }
 
     private fun startMeshService() {
