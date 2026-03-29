@@ -1,5 +1,7 @@
 package com.g2link.connect.ui.screen
 
+import android.graphics.Bitmap
+import android.graphics.Color as AndroidColor
 import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -13,7 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap  // ✅ FIX: proper import for asImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -23,11 +25,11 @@ import com.g2link.connect.sharing.ApkShareManager
 import com.g2link.connect.ui.theme.G2Colors
 import com.g2link.connect.update.UpdateInfo
 import com.g2link.connect.update.UpdateState
-// ✅ FIX: generateQrBitmap is defined in the disastermesh QrScreens.kt, must be imported
-import com.disastermesh.connect.ui.screen.generateQrBitmap
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.qrcode.QRCodeWriter
 
 // ═══════════════════════════════════════════════════════════
-// UPDATE BANNER — Shows at top of ChatList when update exists
+// UPDATE BANNER
 // ═══════════════════════════════════════════════════════════
 
 @Composable
@@ -119,7 +121,6 @@ fun ShareAppScreen(
 ) {
     val apkSize = remember { apkShareManager.getApkSizeMb() }
     val qrContent = remember { apkShareManager.getDownloadQrContent() }
-    // ✅ FIX: generateQrBitmap now imported from com.disastermesh.connect.ui.screen
     val qrBitmap = remember(qrContent) { generateQrBitmap(qrContent, 500) }
 
     Scaffold(
@@ -149,7 +150,6 @@ fun ShareAppScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            // ── Hero card ─────────────────────────────────
             Surface(
                 color = G2Colors.SurfaceVariant,
                 shape = RoundedCornerShape(16.dp),
@@ -188,27 +188,24 @@ fun ShareAppScreen(
                 }
             }
 
-            // ── Share method: Bluetooth/direct ────────────
             ShareMethodCard(
                 icon = Icons.Default.Bluetooth,
                 title = "Share App Directly",
-                subtitle = "Send APK ($apkSize) via Bluetooth or any app — no internet needed",
+                subtitle = "Send APK ($apkSize) via Bluetooth — no internet needed",
                 color = G2Colors.Brand,
                 buttonLabel = "Share Now",
                 onClick = { apkShareManager.shareApkViaBluetoothOrAny() }
             )
 
-            // ── Share method: Download link ───────────────
             ShareMethodCard(
                 icon = Icons.Default.Link,
                 title = "Share Download Link",
-                subtitle = "Send the GitHub download link via SMS, WhatsApp, or any app",
+                subtitle = "Send GitHub link via SMS or WhatsApp",
                 color = G2Colors.Connected,
                 buttonLabel = "Share Link",
                 onClick = { apkShareManager.shareDownloadLink() }
             )
 
-            // ── QR Code ───────────────────────────────────
             Text(
                 "Or scan this QR code",
                 color = Color(0xFF8BA0BF),
@@ -227,7 +224,6 @@ fun ShareAppScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
-                            // ✅ FIX: asImageBitmap() now resolves via the proper import at top
                             bitmap = qrBitmap.asImageBitmap(),
                             contentDescription = "G2-Link download QR",
                             modifier = Modifier.fillMaxSize()
@@ -236,14 +232,6 @@ fun ShareAppScreen(
                 }
             }
 
-            Text(
-                "Anyone who scans this can download G2-Link from GitHub",
-                color = Color(0xFF6E7681),
-                fontSize = 11.sp,
-                textAlign = TextAlign.Center
-            )
-
-            // ── Info ──────────────────────────────────────
             Surface(
                 color = G2Colors.BrandGlow,
                 shape = RoundedCornerShape(12.dp),
@@ -255,15 +243,13 @@ fun ShareAppScreen(
                 ) {
                     Icon(Icons.Default.Info, null, tint = G2Colors.Brand, modifier = Modifier.size(18.dp))
                     Text(
-                        "In emergencies, you can install G2-Link from a neighbor's phone " +
-                        "via Bluetooth — no internet connection needed.",
+                        "In emergencies, you can install G2-Link from a neighbor's phone via Bluetooth.",
                         color = Color(0xFF8BA0BF),
                         fontSize = 12.sp,
                         lineHeight = 17.sp
                     )
                 }
             }
-
             Spacer(Modifier.height(16.dp))
         }
     }
@@ -312,6 +298,24 @@ private fun ShareMethodCard(
     }
 }
 
-// ✅ FIX: Removed the broken private extension that tried to call
-//    androidx.compose.ui.graphics.asImageBitmap(this) as a non-extension.
-//    The proper import at the top of this file handles it cleanly.
+// ═══════════════════════════════════════════════════════════
+// QR UTILITY — Embedded here to replace deleted disastermesh file
+// ═══════════════════════════════════════════════════════════
+
+fun generateQrBitmap(content: String, size: Int): Bitmap? {
+    return try {
+        val writer = QRCodeWriter()
+        val bitMatrix = writer.encode(content, BarcodeFormat.QR_CODE, size, size)
+        val width = bitMatrix.width
+        val height = bitMatrix.height
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+        for (x in 0 until width) {
+            for (y in 0 until height) {
+                bitmap.setPixel(x, y, if (bitMatrix.get(x, y)) AndroidColor.BLACK else AndroidColor.WHITE)
+            }
+        }
+        bitmap
+    } catch (e: Exception) {
+        null
+    }
+}
