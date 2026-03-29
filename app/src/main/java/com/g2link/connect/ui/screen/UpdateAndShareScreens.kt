@@ -283,4 +283,37 @@ private fun ShareMethodCard(
                 Icon(icon, null, tint = color, modifier = Modifier.size(22.dp))
             }
             Column(modifier = Modifier.weight(1f)) {
-                Text(title, color =
+                Text(title, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+        Text(subtitle, color = Color(0xFF8BA0BF), fontSize = 12.sp, lineHeight = 16.sp)
+    }
+    Button(
+        onClick = onClick,
+        colors = ButtonDefaults.buttonColors(containerColor = color),
+        shape = RoundedCornerShape(10.dp),
+        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+    ) {
+        Text(buttonLabel, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// QR UTILITY
+// ═══════════════════════════════════════════════════════════
+
+fun generateQrBitmap(content: String, size: Int): Bitmap? {
+    return try {
+        val writer = QRCodeWriter()
+        val bitMatrix = writer.encode(content, BarcodeFormat.QR_CODE, size, size)
+        val width = bitMatrix.width
+        val height = bitMatrix.height
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+        for (x in 0 until width) {
+            for (y in 0 until height) {
+                bitmap.setPixel(x, y, if (bitMatrix.get(x, y)) AndroidColor.BLACK else AndroidColor.WHITE)
+            }
+        }
+        bitmap
+    } catch (e: Exception) {
+        null
+    }
+}
