@@ -18,11 +18,9 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideMeshDatabase(@ApplicationContext context: Context): MeshDatabase {
-        return Room.databaseBuilder(
-            context,
-            MeshDatabase::class.java,
-            "g2link.db"
-        ).fallbackToDestructiveMigration().build()
+        return Room.databaseBuilder(context, MeshDatabase::class.java, "g2link.db")
+            .fallbackToDestructiveMigration()
+            .build()
     }
 
     @Provides fun provideMessageDao(db: MeshDatabase): MessageDao = db.messageDao()
