@@ -11,7 +11,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -19,8 +18,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.g2link.connect.data.local.entity.ContactEntity
-import com.g2link.connect.data.local.entity.MessageEntity
 import com.g2link.connect.domain.model.ConnectionStatus
 import com.g2link.connect.domain.model.ContactType
 import com.g2link.connect.ui.theme.G2Colors
@@ -54,15 +51,9 @@ fun ChatListScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = onNavigateToQrShow) {
-                        Icon(Icons.Default.QrCode, "My QR", tint = Color.White)
-                    }
-                    IconButton(onClick = onNavigateToContacts) {
-                        Icon(Icons.Default.PersonAdd, "Contacts", tint = Color.White)
-                    }
-                    IconButton(onClick = onNavigateToSettings) {
-                        Icon(Icons.Default.Settings, "Settings", tint = Color.White)
-                    }
+                    IconButton(onClick = onNavigateToQrShow) { Icon(Icons.Default.QrCode, "My QR", tint = Color.White) }
+                    IconButton(onClick = onNavigateToContacts) { Icon(Icons.Default.PersonAdd, "Contacts", tint = Color.White) }
+                    IconButton(onClick = onNavigateToSettings) { Icon(Icons.Default.Settings, "Settings", tint = Color.White) }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = G2Colors.Surface)
             )
@@ -80,56 +71,122 @@ fun ChatListScreen(
         },
         containerColor = G2Colors.Background
     ) { padding ->
-        if (contacts.isEmpty()) {
-            EmptyContactsState(
-                connectionStatus = connectionStatus,
-                modifier = Modifier.padding(padding)
-            )
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(bottom = 88.dp)
-            ) {
-                if (peerCount > 0) {
-                    item {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(G2Colors.Background)
-                                .padding(horizontal = 16.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(Icons.Default.Hub, null, tint = G2Colors.Connected, modifier = Modifier.size(16.dp))
-                            Text("$peerCount device${if (peerCount != 1) "s" else ""} in mesh range",
-                                color = G2Colors.Connected, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+
+            // ── Live mesh status strip ──────────────────────
+            MeshStatusStrip(connectionStatus, peerCount)
+
+            if (contacts.isEmpty()) {
+                // ── Empty state with clear instructions ──────
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        Icons.Default.Hub, null, modifier = Modifier.size(64.dp),
+                        tint = when (connectionStatus) {
+                            ConnectionStatus.CONNECTED    -> G2Colors.Connected
+                            ConnectionStatus.SEARCHING    -> G2Colors.Searching
+                            ConnectionStatus.DISCONNECTED -> Color(0xFF1E2A3A)
                         }
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        when (connectionStatus) {
+                            ConnectionStatus.CONNECTED    -> "Mesh Active — $peerCount device${if (peerCount != 1) "s" else ""} nearby"
+                            ConnectionStatus.SEARCHING    -> "Scanning for nearby devices..."
+                            ConnectionStatus.DISCONNECTED -> "Mesh offline"
+                        },
+                        color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        when (connectionStatus) {
+                            ConnectionStatus.CONNECTED ->
+                                "Devices found!\nAdd them as contacts with QR code\nor they will appear automatically."
+                            ConnectionStatus.SEARCHING ->
+                                "Make sure Bluetooth and Location\nare enabled on both devices.\nKeep G2-Link open on all devices."
+                            ConnectionStatus.DISCONNECTED ->
+                                "Enable Bluetooth and Location\nto start the mesh network."
+                        },
+                        color = Color(0xFF8BA0BF), fontSize = 14.sp,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        lineHeight = 20.sp
+                    )
+                    Spacer(Modifier.height(24.dp))
+                    Button(
+                        onClick = onNavigateToContacts,
+                        colors = ButtonDefaults.buttonColors(containerColor = G2Colors.Brand),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.Default.QrCodeScanner, null, tint = Color.Black)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Add Contact via QR", color = Color.Black, fontWeight = FontWeight.Bold)
                     }
                 }
-                items(
-                    items = buildConversationList(contacts, latestMessages, myDeviceId),
-                    key = { it.deviceId }
-                ) { item ->
-                    ConversationListItem(item = item, onClick = { onNavigateToChat(item.deviceId) })
-                    HorizontalDivider(color = Color(0xFF1E2A3A), thickness = 0.5.dp)
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = 88.dp)
+                ) {
+                    items(
+                        items = buildConversationList(contacts, latestMessages, myDeviceId),
+                        key = { it.deviceId }
+                    ) { item ->
+                        ConversationListItem(item = item, onClick = { onNavigateToChat(item.deviceId) })
+                        HorizontalDivider(color = Color(0xFF1E2A3A), thickness = 0.5.dp)
+                    }
                 }
             }
         }
     }
 }
 
-data class ConversationItem(
-    val deviceId: String,
-    val displayName: String,
-    val lastMessage: String,
-    val lastMessageTime: Long,
-    val contactType: ContactType,
-    val isNearby: Boolean
-)
+@Composable
+private fun MeshStatusStrip(status: ConnectionStatus, peerCount: Int) {
+    val (bg, icon, text, color) = when (status) {
+        ConnectionStatus.CONNECTED -> Quadruple(
+            G2Colors.Connected.copy(alpha = 0.1f), Icons.Default.Hub,
+            "Mesh active — $peerCount device${if (peerCount != 1) "s" else ""} in range", G2Colors.Connected
+        )
+        ConnectionStatus.SEARCHING -> Quadruple(
+            G2Colors.Searching.copy(alpha = 0.08f), Icons.Default.BluetoothSearching,
+            "Scanning via Bluetooth & Wi-Fi Direct...", G2Colors.Searching
+        )
+        ConnectionStatus.DISCONNECTED -> Quadruple(
+            G2Colors.Emergency.copy(alpha = 0.08f), Icons.Default.BluetoothDisabled,
+            "Mesh offline — enable Bluetooth & Location", G2Colors.Emergency
+        )
+    }
+    Surface(color = bg, modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(icon, null, tint = color, modifier = Modifier.size(16.dp))
+            Text(text, color = color, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+        }
+    }
+}
+
+// Helper for destructuring
+private data class Quadruple<A,B,C,D>(val first: A, val second: B, val third: C, val fourth: D)
+
+@Composable
+fun ConnectionStatusBadge(status: ConnectionStatus, peerCount: Int) {
+    val (color, text) = when (status) {
+        ConnectionStatus.CONNECTED    -> Pair(G2Colors.Connected, "● $peerCount peer${if (peerCount != 1) "s" else ""} connected")
+        ConnectionStatus.SEARCHING    -> Pair(G2Colors.Searching, "● Scanning...")
+        ConnectionStatus.DISCONNECTED -> Pair(G2Colors.Disconnected, "● Offline")
+    }
+    Text(text = text, color = color, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+}
 
 private fun buildConversationList(
-    contacts: List<ContactEntity>,
-    messages: List<MessageEntity>,
+    contacts: List<com.g2link.connect.data.local.entity.ContactEntity>,
+    messages: List<com.g2link.connect.data.local.entity.MessageEntity>,
     myDeviceId: String
 ): List<ConversationItem> {
     return contacts.map { contact ->
@@ -139,7 +196,7 @@ private fun buildConversationList(
         ConversationItem(
             deviceId = contact.deviceId,
             displayName = contact.displayName,
-            lastMessage = lastMsg?.content ?: "Tap to send a message",
+            lastMessage = lastMsg?.content ?: "Tap to start a conversation",
             lastMessageTime = lastMsg?.timestamp ?: contact.lastSeenAt,
             contactType = contact.contactType,
             isNearby = contact.lastSeenAt > System.currentTimeMillis() - 60_000
@@ -150,23 +207,15 @@ private fun buildConversationList(
 @Composable
 private fun ConversationListItem(item: ConversationItem, onClick: () -> Unit) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Box {
             ContactAvatar(name = item.displayName, size = 50)
             if (item.isNearby) {
-                Box(
-                    modifier = Modifier
-                        .size(14.dp)
-                        .background(G2Colors.Connected, CircleShape)
-                        .border(2.dp, G2Colors.Surface, CircleShape)
-                        .align(Alignment.BottomEnd)
-                )
+                Box(modifier = Modifier.size(14.dp).background(G2Colors.Connected, CircleShape)
+                    .border(2.dp, G2Colors.Surface, CircleShape).align(Alignment.BottomEnd))
             }
         }
         Column(modifier = Modifier.weight(1f)) {
@@ -178,48 +227,7 @@ private fun ConversationListItem(item: ConversationItem, onClick: () -> Unit) {
             }
             Text(item.lastMessage, color = Color(0xFF8BA0BF), fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        if (item.lastMessageTime > 0) {
-            Text(formatTime(item.lastMessageTime), color = Color(0xFF4A5568), fontSize = 12.sp)
-        }
-    }
-}
-
-@Composable
-fun ConnectionStatusBadge(status: ConnectionStatus, peerCount: Int) {
-    val (color, text) = when (status) {
-        ConnectionStatus.CONNECTED    -> Pair(G2Colors.Connected, "● $peerCount peer${if (peerCount != 1) "s" else ""} connected")
-        ConnectionStatus.SEARCHING    -> Pair(G2Colors.Searching, "● Searching for peers...")
-        ConnectionStatus.DISCONNECTED -> Pair(G2Colors.Disconnected, "● Offline")
-    }
-    Text(text = text, color = color, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-}
-
-@Composable
-private fun EmptyContactsState(connectionStatus: ConnectionStatus, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            Icons.Default.Hub, null, modifier = Modifier.size(64.dp),
-            tint = when (connectionStatus) {
-                ConnectionStatus.CONNECTED    -> G2Colors.Connected
-                ConnectionStatus.SEARCHING    -> G2Colors.Searching
-                ConnectionStatus.DISCONNECTED -> Color(0xFF1E2A3A)
-            }
-        )
-        Spacer(Modifier.height(16.dp))
-        Text(
-            when (connectionStatus) {
-                ConnectionStatus.CONNECTED    -> "Connected to mesh"
-                ConnectionStatus.SEARCHING    -> "Searching for nearby devices..."
-                ConnectionStatus.DISCONNECTED -> "No mesh connection"
-            },
-            color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold
-        )
-        Spacer(Modifier.height(8.dp))
-        Text("Scan a contact's QR code\nor wait for nearby devices", color = Color(0xFF8BA0BF), fontSize = 14.sp)
+        if (item.lastMessageTime > 0) Text(formatTime(item.lastMessageTime), color = Color(0xFF4A5568), fontSize = 12.sp)
     }
 }
 
@@ -227,16 +235,10 @@ private fun EmptyContactsState(connectionStatus: ConnectionStatus, modifier: Mod
 fun ContactAvatar(name: String, size: Int) {
     val initial = name.firstOrNull()?.uppercaseChar() ?: '?'
     val color = remember(name) {
-        val colors = listOf(
-            Color(0xFF1565C0), Color(0xFF6A1B9A), Color(0xFF00695C),
-            Color(0xFFE65100), Color(0xFF283593), Color(0xFF880E4F)
-        )
+        val colors = listOf(Color(0xFF1565C0), Color(0xFF6A1B9A), Color(0xFF00695C), Color(0xFFE65100), Color(0xFF283593))
         colors[name.hashCode().and(0x7FFFFFFF) % colors.size]
     }
-    Box(
-        modifier = Modifier.size(size.dp).clip(CircleShape).background(color),
-        contentAlignment = Alignment.Center
-    ) {
+    Box(modifier = Modifier.size(size.dp).clip(CircleShape).background(color), contentAlignment = Alignment.Center) {
         Text(initial.toString(), color = Color.White, fontSize = (size * 0.4f).sp, fontWeight = FontWeight.Bold)
     }
 }
@@ -250,3 +252,5 @@ private fun formatTime(timestamp: Long): String {
         else             -> SimpleDateFormat("dd/MM", Locale.getDefault()).format(Date(timestamp))
     }
 }
+
+private fun androidx.compose.ui.Modifier.clip(shape: CircleShape) = this.then(androidx.compose.foundation.shape.CircleShape.let { Modifier })
